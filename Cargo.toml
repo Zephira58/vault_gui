@@ -2,7 +2,30 @@
 name = "vault_gui"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Xanthus58 <Xanthus58@protonmail.com>"]
+description = "A gui frontend to manage a mock bank database"
+repository = "https://github.com/Xanthus58/vault_gui"
+license = "MIT"
+readme = "README.md"
+keywords = ["bank", "gui"]
 
 [dependencies]
+#gui frontend
+eframe = "0.22.0"
+egui-notify = "0.7.0"
+
+#networking
+sqlx = { version = "0.7", features = [ "runtime-async-std" ] }
+
+#misc
+self_update = "0.37.0"
+tokio = { version = "1.29.1", features = ["full"] }
+regex = "1.9.1"
+
+[profile.release]
+opt-level = 3
+debug = false
+panic = "abort"
+codegen-units = 16
+lto = true
+incremental = false
