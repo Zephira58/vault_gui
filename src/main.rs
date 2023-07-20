@@ -1,10 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{net::IpAddr, str::FromStr, time::Duration, thread};
 use eframe::egui;
+use egui_notify::{Anchor, Toast, Toasts};
+use std::{net::IpAddr, str::FromStr, thread, time::Duration};
 use vault_gui::*;
-use egui_notify::{Anchor, Toasts, Toast};
-
 
 use std::sync::mpsc;
 
@@ -74,14 +73,23 @@ impl eframe::App for MyApp {
             if !self.server_valid {
                 ui.heading("Vault GUI");
                 ui.label("Please enter the ip and port of the sql server below");
+
                 ui.horizontal(|ui| {
-                    ui.label("IP:");
+                    if ui.label("IP:").hovered() {
+                        egui::show_tooltip(ui.ctx(), egui::Id::new("ip_tooltip"), |ui| {
+                            ui.label("IPV4 Only");
+                        });
+                    }
                     ui.text_edit_singleline(&mut self.ip);
                 });
 
                 ui.horizontal(|ui| {
                     ui.label("Port:");
-                    ui.add(egui::DragValue::new(&mut self.port).speed(1.0).clamp_range(0..=65535));
+                    ui.add(
+                        egui::DragValue::new(&mut self.port)
+                            .speed(1.0)
+                            .clamp_range(0..=65535),
+                    );
                 });
 
                 if ui.button("Connect").clicked() {
@@ -91,20 +99,19 @@ impl eframe::App for MyApp {
                     if !ip_verified {
                         cb(self.toasts.error("Invalid IP Address!"));
                         println!("Invalid IP Address!");
-                        return
+                        return;
                     }
 
                     println!("IP: {}", self.ip);
                     println!("Port: {}", self.port);
                     println!("Testing connection to server...");
-                    
+
                     let ip: IpAddr = IpAddr::from_str(&self.ip).unwrap();
                     let port = self.port;
-    
+
                     // Create a channel to communicate the result of the ping test
                     let tx = self.tx.clone();
-                    
-                    //TODO: Fix this async code and try to make it not freeze the gui
+
                     thread::spawn(move || {
                         let result = tokio::runtime::Runtime::new()
                             .unwrap()
@@ -131,11 +138,11 @@ impl eframe::App for MyApp {
                     if ui.button("Login").clicked() {
                         println!("Username: {}", self.username);
                         println!("Password: {}", self.password);
-                } 
+                    }
 
                     if ui.button("Return").clicked() {
                         self.server_valid = false;
-                }
+                    }
                 });
             }
 
@@ -149,7 +156,6 @@ impl eframe::App for MyApp {
                     println!("Connection Failed!")
                 }
             }
-            
         });
         self.toasts.show(ctx); // Requests to render toasts
     }

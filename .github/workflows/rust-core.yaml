@@ -69,19 +69,18 @@ jobs:
           wait-for-processing: true
 
 # Runs cargo fmt and pushes any changes to the github repo
-  format:
-    name: Run Cargo fmt
+  update:
+    name: Run Cargo FMT
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
-            toolchain: stable
-            components: rustfmt
-            override: true
-      - uses: mbrobbel/rustfmt-check@master
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          command: fmt
+          args:
           
 # Runs cargo update to update the cargo.lock file
   update:
