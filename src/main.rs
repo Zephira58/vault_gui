@@ -24,7 +24,10 @@ struct MyApp {
     closable: bool,
     duration: f32,
 
-    server_valid: bool,
+    network_alive: bool,
+    connect: bool,
+
+    db_ip_valid: bool,
     ip: String,
     port: i32,
 
@@ -44,7 +47,10 @@ impl Default for MyApp {
             closable: true,
             duration: 3.5,
 
-            server_valid: false,
+            network_alive: false,
+            connect: false,
+
+            db_ip_valid: false,
             login_bool: false,
 
             ip: "127.0.0.1".to_owned(),
@@ -70,7 +76,35 @@ impl eframe::App for MyApp {
                     .set_duration(Some(Duration::from_millis((1000. * self.duration) as u64)));
             };
 
-            if !self.server_valid {
+            if self.network_alive == false {
+                //Tests if the end user has internet access.
+                let iptest = "142.250.70.142".to_owned();
+                let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
+                let port = 80;
+
+                // Create a channel to communicate the result of the ping test
+                let tx = self.tx.clone();
+
+                thread::spawn(move || {
+                    let result = tokio::runtime::Runtime::new()
+                        .unwrap()
+                        .block_on(is_server_alive(ip, port as u16, 30));
+                    tx.send(dbg!(result)).expect("Failed to send result");
+                });
+
+                if let Ok(result) = self.rx.try_recv() {
+                    if result {
+                        cb(self.toasts.success("Network Connection Established!"));
+                        println!("Network Connection Established");
+                        self.network_alive = true
+                    } else {
+                        cb(self.toasts.error("Network Connection Failed!!"));
+                        println!("Network Connection Failed!");
+                    }
+                }
+            }
+
+            if !self.db_ip_valid && self.network_alive {
                 ui.heading("Vault GUI");
                 ui.label("Please enter the ip and port of the sql server below");
 
@@ -93,6 +127,7 @@ impl eframe::App for MyApp {
                 });
 
                 if ui.button("Connect").clicked() {
+                    self.connect = true;
                     cb(self.toasts.info("Testing connection..."));
 
                     let ip_verified = validate_ip_address(&self.ip);
@@ -121,7 +156,7 @@ impl eframe::App for MyApp {
                 }
             }
 
-            if !self.login_bool && self.server_valid {
+            if !self.login_bool && self.db_ip_valid {
                 ui.label("Please enter your username and password below");
 
                 ui.horizontal(|ui| {
@@ -141,19 +176,22 @@ impl eframe::App for MyApp {
                     }
 
                     if ui.button("Return").clicked() {
-                        self.server_valid = false;
+                        self.connect = false;
+                        self.db_ip_valid = false;
                     }
                 });
             }
 
-            if let Ok(result) = self.rx.try_recv() {
-                if result {
-                    cb(self.toasts.success("Connection Successful!"));
-                    self.server_valid = true;
-                    println!("Connection Successful!")
-                } else {
-                    cb(self.toasts.error("Connection Failed!"));
-                    println!("Connection Failed!")
+            if self.network_alive && self.connect {
+                if let Ok(result) = self.rx.try_recv() {
+                    if result && !self.db_ip_valid {
+                        cb(self.toasts.success("Connection Successful!"));
+                        self.db_ip_valid = true;
+                        println!("Connection Successful!")
+                    } else if !self.db_ip_valid {
+                        cb(self.toasts.error("Connection Failed!"));
+                        println!("Connection Failed!")
+                    }
                 }
             }
         });
