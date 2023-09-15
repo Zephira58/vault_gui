@@ -1,10 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use config::Config;
+
 use eframe::egui::{self, Color32};
 use egui_notify::{Anchor, Toast, Toasts};
 use std::{
-    collections::HashMap, fs::File, io::prelude::*, net::IpAddr, str::FromStr, thread,
+    net::IpAddr, str::FromStr, thread,
     time::Duration,
 };
 use vault_gui::*;
@@ -41,8 +41,6 @@ struct MyApp {
     ip: String,
     port: i32,
 
-    first_time_setup: bool,
-
     login_bool: bool,
     username: String,
     password: String,
@@ -67,8 +65,6 @@ impl Default for MyApp {
             ip: "127.0.0.1".to_owned(),
             port: 3306,
 
-            first_time_setup: true,
-
             login_bool: false,
             username: "".to_owned(),
             password: "".to_owned(),
@@ -91,7 +87,7 @@ impl eframe::App for MyApp {
             };
 
             if !self.config_check {
-                let config = config_manager();
+                let _config = config_manager();
                 self.config_check = true;
 
                 //TODO: Add logic that'll check for if the config is empty, if it is then skip past, if not then autofill the application variables
@@ -186,12 +182,6 @@ impl eframe::App for MyApp {
                         });
                     }
                 },
-                _ => {
-                    println!("If you see this, something went wrong. Please make an issue on github");
-                    cb(self.toasts.error("If you see this, something went wrong. Please make an issue on github"));
-                    ui.colored_label(Color32::from_rgb(150, 0, 0), "Warning: If you see this, something went wrong. Please make an issue on github");
-
-                }
             }
 
             if !self.login_bool && self.db_ip_valid {

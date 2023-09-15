@@ -2,8 +2,8 @@ use config::Config;
 use regex::Regex;
 use std::{
     collections::HashMap,
-    fs::{self, File},
-    io::{prelude, BufReader, Read, Write},
+    fs::{self},
+    io::Write,
     net::{IpAddr, TcpStream},
     path::Path,
     time::Duration,
@@ -43,7 +43,7 @@ pub fn config_manager() -> HashMap<String, String> {
                 .open(dir.to_str().unwrap().to_owned() + "config.toml")
                 .expect("create failed");
 
-            config_file.write_all(b"#Enter your MySQL information below for caching\nip = ''\nport = '3306'\nusername = ''\npassword = ''"); //pre-inputs values if none are already present
+            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\nip = ''\nport = '3306'\nusername = ''\npassword = ''"); //pre-inputs values if none are already present
         }
         Ok(_) => {
 
@@ -56,10 +56,10 @@ pub fn config_manager() -> HashMap<String, String> {
         .unwrap();
 
     //Sets the variable "hi" to a hashmaped version of the config.toml file.
-    let config = settings
+    
+    settings
         .try_deserialize::<HashMap<String, String>>()
-        .unwrap();
-    return config;
+        .unwrap()
 
     //Reads the hashmap with the key of "test" to get the value
     //match hi.get("test") {
@@ -67,5 +67,3 @@ pub fn config_manager() -> HashMap<String, String> {
     //    _ => println!("error"),
     //}
 }
-
-fn make_config_file() {}
