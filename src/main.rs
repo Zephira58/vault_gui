@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use eframe::egui;
+use eframe::egui::{self, Color32};
 use egui_notify::{Anchor, Toast, Toasts};
 use std::{net::IpAddr, str::FromStr, thread, time::Duration};
 use vault_gui::*;
@@ -19,12 +19,16 @@ fn main() -> Result<(), eframe::Error> {
     )
 }
 
+enum NetworkStatus {
+    Untested,
+    Down,
+    Up,
+}
+
 struct MyApp {
     toasts: Toasts,
-    closable: bool,
-    duration: f32,
 
-    network_alive: bool,
+    network_status: NetworkStatus,
     connect: bool,
 
     db_ip_valid: bool,
@@ -44,10 +48,8 @@ impl Default for MyApp {
         let (tx, rx) = mpsc::channel();
         Self {
             toasts: Toasts::default().with_anchor(Anchor::BottomRight),
-            closable: true,
-            duration: 3.5,
 
-            network_alive: false,
+            network_status: NetworkStatus::Untested,
             connect: false,
 
             db_ip_valid: false,
@@ -72,77 +74,16 @@ impl eframe::App for MyApp {
 
             let cb = |t: &mut Toast| {
                 //Callback for the toast
-                t.set_closable(self.closable)
-                    .set_duration(Some(Duration::from_millis((1000. * self.duration) as u64)));
+                t.set_closable(true)
+                    .set_duration(Some(Duration::from_millis((1000. * 3.5) as u64)));
             };
 
-            if self.network_alive == false {
-                //Tests if the end user has internet access.
-                let iptest = "142.250.70.142".to_owned();
-                let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
-                let port = 80;
-
-                // Create a channel to communicate the result of the ping test
-                let tx = self.tx.clone();
-
-                thread::spawn(move || {
-                    let result = tokio::runtime::Runtime::new()
-                        .unwrap()
-                        .block_on(is_server_alive(ip, port as u16, 30));
-                    tx.send(dbg!(result)).expect("Failed to send result");
-                });
-
-                if let Ok(result) = self.rx.try_recv() {
-                    if result {
-                        cb(self.toasts.success("Network Connection Established!"));
-                        println!("Network Connection Established");
-                        self.network_alive = true
-                    } else {
-                        cb(self.toasts.error("Network Connection Failed!!"));
-                        println!("Network Connection Failed!");
-                    }
-                }
-            }
-
-            if !self.db_ip_valid && self.network_alive {
-                ui.heading("Vault GUI");
-                ui.label("Please enter the ip and port of the sql server below");
-
-                ui.horizontal(|ui| {
-                    if ui.label("IP:").hovered() {
-                        egui::show_tooltip(ui.ctx(), egui::Id::new("ip_tooltip"), |ui| {
-                            ui.label("IPV4 Only");
-                        });
-                    }
-                    ui.text_edit_singleline(&mut self.ip);
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("Port:");
-                    ui.add(
-                        egui::DragValue::new(&mut self.port)
-                            .speed(1.0)
-                            .clamp_range(0..=65535),
-                    );
-                });
-
-                if ui.button("Connect").clicked() {
-                    self.connect = true;
-                    cb(self.toasts.info("Testing connection..."));
-
-                    let ip_verified = validate_ip_address(&self.ip);
-                    if !ip_verified {
-                        cb(self.toasts.error("Invalid IP Address!"));
-                        println!("Invalid IP Address!");
-                        return;
-                    }
-
-                    println!("IP: {}", self.ip);
-                    println!("Port: {}", self.port);
-                    println!("Testing connection to server...");
-
-                    let ip: IpAddr = IpAddr::from_str(&self.ip).unwrap();
-                    let port = self.port;
+            match self.network_status {
+                NetworkStatus::Untested => {
+                    //Tests if the end user has internet access.
+                    let iptest = "142.250.70.142".to_owned();
+                    let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
+                    let port = 0;
 
                     // Create a channel to communicate the result of the ping test
                     let tx = self.tx.clone();
@@ -150,9 +91,86 @@ impl eframe::App for MyApp {
                     thread::spawn(move || {
                         let result = tokio::runtime::Runtime::new()
                             .unwrap()
-                            .block_on(is_server_alive(ip, port as u16, 5));
-                        tx.send(dbg!(result)).expect("Failed to send result");
+                            .block_on(is_server_alive(ip, port as u16, 30));
+                       tx.send(dbg!(result)).expect("Failed to send result");
                     });
+
+                    if let Ok(result) = self.rx.try_recv() {
+                        if result {
+                           cb(self.toasts.success("Network Connection Established!"));
+                          println!("Network Connection Established");
+                         self.network_status = NetworkStatus::Up
+                      } else {
+                         cb(self.toasts.error("Network Connection Failed!!"));
+                         println!("Network Connection Failed!");
+                         self.network_status = NetworkStatus::Down
+                     }
+                }
+                }
+                NetworkStatus::Down => {
+                    ui.colored_label(Color32::from_rgb(150, 0, 0), "Warning: Was not able to successfully test your network connection, you may have difficulties.\n\nPlease ensure that you have a stable network connection\n");
+                    let bypass = ui.button("Bypass").clicked();
+                    if bypass {
+                        self.network_status = NetworkStatus::Up
+                    }
+                },
+
+                NetworkStatus::Up => {
+                    ui.heading("Vault GUI");
+                    ui.label("Please enter the ip and port of the sql server below");
+    
+                    ui.horizontal(|ui| {
+                        if ui.label("IP:").hovered() {
+                            egui::show_tooltip(ui.ctx(), egui::Id::new("ip_tooltip"), |ui| {
+                                ui.label("IPV4 Only");
+                            });
+                        }
+                        ui.text_edit_singleline(&mut self.ip);
+                    });
+    
+                    ui.horizontal(|ui| {
+                        ui.label("Port:");
+                        ui.add(
+                            egui::DragValue::new(&mut self.port)
+                                .speed(1.0)
+                                .clamp_range(0..=65535),
+                        );
+                    });
+    
+                    if ui.button("Connect").clicked() {
+                        self.connect = true;
+                        cb(self.toasts.info("Testing connection..."));
+    
+                        let ip_verified = validate_ip_address(&self.ip);
+                        if !ip_verified {
+                            cb(self.toasts.error("Invalid IP Address!"));
+                            println!("Invalid IP Address!");
+                            return;
+                        }
+    
+                        println!("IP: {}", self.ip);
+                        println!("Port: {}", self.port);
+                        println!("Testing connection to server...");
+    
+                        let ip: IpAddr = IpAddr::from_str(&self.ip).unwrap();
+                        let port = self.port;
+    
+                        // Create a channel to communicate the result of the ping test
+                        let tx = self.tx.clone();
+    
+                        thread::spawn(move || {
+                            let result = tokio::runtime::Runtime::new()
+                                .unwrap()
+                                .block_on(is_server_alive(ip, port as u16, 5));
+                            tx.send(dbg!(result)).expect("Failed to send result");
+                        });
+                    }
+                },
+                _ => {
+                    println!("If you see this, something went wrong. Please make an issue on github");
+                    cb(self.toasts.error("If you see this, something went wrong. Please make an issue on github"));
+                    ui.colored_label(Color32::from_rgb(150, 0, 0), "Warning: If you see this, something went wrong. Please make an issue on github");
+
                 }
             }
 
@@ -182,7 +200,7 @@ impl eframe::App for MyApp {
                 });
             }
 
-            if self.network_alive && self.connect {
+            if self.connect {
                 if let Ok(result) = self.rx.try_recv() {
                     if result && !self.db_ip_valid {
                         cb(self.toasts.success("Connection Successful!"));
