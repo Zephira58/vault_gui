@@ -1,8 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use config::Config;
 use eframe::egui::{self, Color32};
 use egui_notify::{Anchor, Toast, Toasts};
-use std::{net::IpAddr, str::FromStr, thread, time::Duration};
+use std::{
+    collections::HashMap, fs::File, io::prelude::*, net::IpAddr, str::FromStr, thread,
+    time::Duration,
+};
 use vault_gui::*;
 
 use std::sync::mpsc;
@@ -26,6 +30,8 @@ enum NetworkStatus {
 }
 
 struct MyApp {
+    config_check: bool,
+
     toasts: Toasts,
 
     network_status: NetworkStatus,
@@ -34,6 +40,8 @@ struct MyApp {
     db_ip_valid: bool,
     ip: String,
     port: i32,
+
+    first_time_setup: bool,
 
     login_bool: bool,
     username: String,
@@ -47,17 +55,21 @@ impl Default for MyApp {
     fn default() -> Self {
         let (tx, rx) = mpsc::channel();
         Self {
+            config_check: false,
+
             toasts: Toasts::default().with_anchor(Anchor::BottomRight),
 
             network_status: NetworkStatus::Untested,
             connect: false,
 
             db_ip_valid: false,
-            login_bool: false,
 
             ip: "127.0.0.1".to_owned(),
             port: 3306,
 
+            first_time_setup: true,
+
+            login_bool: false,
             username: "".to_owned(),
             password: "".to_owned(),
 
@@ -78,12 +90,20 @@ impl eframe::App for MyApp {
                     .set_duration(Some(Duration::from_millis((1000. * 3.5) as u64)));
             };
 
+            if !self.config_check {
+                let config = config_manager();
+                self.config_check = true;
+
+                //TODO: Add logic that'll check for if the config is empty, if it is then skip past, if not then autofill the application variables
+                
+            }
+
             match self.network_status {
                 NetworkStatus::Untested => {
                     //Tests if the end user has internet access.
                     let iptest = "142.250.70.142".to_owned();
                     let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
-                    let port = 0;
+                    let port = 80;
 
                     // Create a channel to communicate the result of the ping test
                     let tx = self.tx.clone();
@@ -118,7 +138,7 @@ impl eframe::App for MyApp {
                 NetworkStatus::Up => {
                     ui.heading("Vault GUI");
                     ui.label("Please enter the ip and port of the sql server below");
-    
+
                     ui.horizontal(|ui| {
                         if ui.label("IP:").hovered() {
                             egui::show_tooltip(ui.ctx(), egui::Id::new("ip_tooltip"), |ui| {
@@ -127,7 +147,7 @@ impl eframe::App for MyApp {
                         }
                         ui.text_edit_singleline(&mut self.ip);
                     });
-    
+
                     ui.horizontal(|ui| {
                         ui.label("Port:");
                         ui.add(
@@ -136,28 +156,28 @@ impl eframe::App for MyApp {
                                 .clamp_range(0..=65535),
                         );
                     });
-    
+
                     if ui.button("Connect").clicked() {
                         self.connect = true;
                         cb(self.toasts.info("Testing connection..."));
-    
+
                         let ip_verified = validate_ip_address(&self.ip);
                         if !ip_verified {
                             cb(self.toasts.error("Invalid IP Address!"));
                             println!("Invalid IP Address!");
                             return;
                         }
-    
+
                         println!("IP: {}", self.ip);
                         println!("Port: {}", self.port);
                         println!("Testing connection to server...");
-    
+
                         let ip: IpAddr = IpAddr::from_str(&self.ip).unwrap();
                         let port = self.port;
-    
+
                         // Create a channel to communicate the result of the ping test
                         let tx = self.tx.clone();
-    
+
                         thread::spawn(move || {
                             let result = tokio::runtime::Runtime::new()
                                 .unwrap()
