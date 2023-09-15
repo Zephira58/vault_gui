@@ -1,12 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
 use eframe::egui::{self, Color32};
 use egui_notify::{Anchor, Toast, Toasts};
-use std::{
-    net::IpAddr, str::FromStr, thread,
-    time::Duration,
-};
+use std::{net::IpAddr, str::FromStr, thread, time::Duration};
 use vault_gui::*;
 
 use std::sync::mpsc;
@@ -91,7 +87,6 @@ impl eframe::App for MyApp {
                 self.config_check = true;
 
                 //TODO: Add logic that'll check for if the config is empty, if it is then skip past, if not then autofill the application variables
-                
             }
 
             match self.network_status {
@@ -99,7 +94,7 @@ impl eframe::App for MyApp {
                     //Tests if the end user has internet access.
                     let iptest = "142.250.70.142".to_owned();
                     let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
-                    let port = 80;
+                                        let port = 0;
 
                     // Create a channel to communicate the result of the ping test
                     let tx = self.tx.clone();
@@ -132,55 +127,59 @@ impl eframe::App for MyApp {
                 },
 
                 NetworkStatus::Up => {
-                    ui.heading("Vault GUI");
-                    ui.label("Please enter the ip and port of the sql server below");
+                    if !self.db_ip_valid {
+                        ui.heading("Vault GUI");
+                        ui.label("Please enter the ip and port of the sql server below");
 
-                    ui.horizontal(|ui| {
-                        if ui.label("IP:").hovered() {
-                            egui::show_tooltip(ui.ctx(), egui::Id::new("ip_tooltip"), |ui| {
-                                ui.label("IPV4 Only");
+                        ui.horizontal(|ui| {
+                            if ui.label("IP:").hovered() {
+                                egui::show_tooltip(ui.ctx(), egui::Id::new("ip_tooltip"), |ui| {
+                                    ui.label("IPV4 Only");
+                                });
+                            }
+                            ui.text_edit_singleline(&mut self.ip);
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.label("Port:");
+                            ui.add(
+                                egui::DragValue::new(&mut self.port)
+                                    .speed(1.0)
+                                    .clamp_range(0..=65535),
+                            );
+                        });
+
+                        if ui.button("Connect").clicked() {
+                            self.connect = true;
+                            cb(self.toasts.info("Testing connection..."));
+
+                            let ip_verified = validate_ip_address(&self.ip);
+                            if !ip_verified {
+                                cb(self.toasts.error("Invalid IP Address!"));
+                                println!("Invalid IP Address!");
+                                return;
+                            }
+
+                            println!("IP: {}", self.ip);
+                            println!("Port: {}", self.port);
+                            println!("Testing connection to server...");
+
+                            let ip: IpAddr = IpAddr::from_str(&self.ip).unwrap();
+                            let port = self.port;
+
+                            // Create a channel to communicate the result of the ping test
+                            let tx = self.tx.clone();
+
+                            thread::spawn(move || {
+                                let result = tokio::runtime::Runtime::new()
+                                    .unwrap()
+                                    .block_on(is_server_alive(ip, port as u16, 5));
+                                tx.send(dbg!(result)).expect("Failed to send result");
                             });
                         }
-                        ui.text_edit_singleline(&mut self.ip);
-                    });
-
-                    ui.horizontal(|ui| {
-                        ui.label("Port:");
-                        ui.add(
-                            egui::DragValue::new(&mut self.port)
-                                .speed(1.0)
-                                .clamp_range(0..=65535),
-                        );
-                    });
-
-                    if ui.button("Connect").clicked() {
-                        self.connect = true;
-                        cb(self.toasts.info("Testing connection..."));
-
-                        let ip_verified = validate_ip_address(&self.ip);
-                        if !ip_verified {
-                            cb(self.toasts.error("Invalid IP Address!"));
-                            println!("Invalid IP Address!");
-                            return;
-                        }
-
-                        println!("IP: {}", self.ip);
-                        println!("Port: {}", self.port);
-                        println!("Testing connection to server...");
-
-                        let ip: IpAddr = IpAddr::from_str(&self.ip).unwrap();
-                        let port = self.port;
-
-                        // Create a channel to communicate the result of the ping test
-                        let tx = self.tx.clone();
-
-                        thread::spawn(move || {
-                            let result = tokio::runtime::Runtime::new()
-                                .unwrap()
-                                .block_on(is_server_alive(ip, port as u16, 5));
-                            tx.send(dbg!(result)).expect("Failed to send result");
-                        });
                     }
+
+
                 },
             }
 

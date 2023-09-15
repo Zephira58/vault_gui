@@ -43,11 +43,10 @@ pub fn config_manager() -> HashMap<String, String> {
                 .open(dir.to_str().unwrap().to_owned() + "config.toml")
                 .expect("create failed");
 
-            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\nip = ''\nport = '3306'\nusername = ''\npassword = ''"); //pre-inputs values if none are already present
+            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\nip = ''\nport = '3306'\nusername = ''\npassword = ''");
+            //pre-inputs values if none are already present
         }
-        Ok(_) => {
-
-        }
+        Ok(_) => {}
     }
 
     let settings = Config::builder()
@@ -56,7 +55,7 @@ pub fn config_manager() -> HashMap<String, String> {
         .unwrap();
 
     //Sets the variable "hi" to a hashmaped version of the config.toml file.
-    
+
     settings
         .try_deserialize::<HashMap<String, String>>()
         .unwrap()
