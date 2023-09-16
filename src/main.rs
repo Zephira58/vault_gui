@@ -103,7 +103,7 @@ impl eframe::App for MyApp {
                         let result = tokio::runtime::Runtime::new()
                             .unwrap()
                             .block_on(is_server_alive(ip, port as u16, 30));
-                       tx.send(dbg!(result)).expect("Failed to send result");
+                       tx.send(result).expect("Failed to send result");
                     });
 
                     if let Ok(result) = self.rx.try_recv() {
@@ -113,19 +113,18 @@ impl eframe::App for MyApp {
                           println!("Network Connection Established");
                          self.network_status = NetworkStatus::Up
                       } else {
-                        self.toasts.dismiss_all_toasts();
-                         cb(self.toasts.error("Network Connection Failed!!"));
-                         println!("Network Connection Failed!");
                          self.network_status = NetworkStatus::Down
                      }
                 }
                 }
                 NetworkStatus::Down => {
                     ui.colored_label(Color32::from_rgb(150, 0, 0), "Warning: Was not able to successfully test your network connection, you may have difficulties.\n\nPlease ensure that you have a stable network connection\n");
+
                     let bypass = ui.button("Bypass").clicked();
-                    self.toasts.dismiss_all_toasts();
-                    cb(self.toasts.warning("Network connection could not be established!"));
                     if bypass {
+                        self.toasts.dismiss_all_toasts();
+                        cb(self.toasts.warning("Connection couldn't be verified!"));
+
                         self.network_status = NetworkStatus::Up
                     }
                 },
