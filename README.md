@@ -20,7 +20,7 @@ Vault GUI is a very small lightweight application designed to mimic a basic bank
 Easycompile is a small script for windows, linux, and macos that'll fetch the most up to date version of the application (master branch) and compile it locally. Downloading all neccarry components to compile the application
 ### 🪟Windows (Powershell) (Untested)
 ```
-winget install Git.Git; winget install Rustlang.Rustup; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; cargo build --release; cd .\target\release; mv vault_gui.exe ..\..\; cd ..\..\; .\vault_gui.exe
+winget install Git.Git; winget install Rustlang.Rustup; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; cargo build --release; cd .\target\release; mv vault_gui.exe ..\..\; cd ..\..\; rm -r .\target\; .\vault_gui.exe
 ```
 
 ### 🐧Linux (Debian+) (Untested)
@@ -30,5 +30,5 @@ WIP
 
 ### 🍎Macos (Untested)
 ```
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; brew install git; brew install rust; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; rustup-init; cargo build --release; cd ./target/release; mv vault_gui ../../; cd ../..; ./vault_gui;
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; brew install git; brew install rust; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; rustup-init; cargo build --release; cd ./target/release; mv vault_gui ../../; cd ../..; rm -r .\target\; ./vault_gui;
 ```
