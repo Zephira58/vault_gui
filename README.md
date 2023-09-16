@@ -30,5 +30,5 @@ WIP
 
 ### 🍎Macos (Untested)
 ```
-WIP
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; brew install git; brew install rust; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; rustup-init; cargo build --release; cd ./target/release; mv vault_gui ../../; cd ../..; ./vault_gui;
 ```
