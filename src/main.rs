@@ -2,10 +2,8 @@
 
 use eframe::egui::{self, Color32};
 use egui_notify::{Anchor, Toast, Toasts};
-use std::{net::IpAddr, str::FromStr, thread, time::Duration};
+use std::{net::IpAddr, str::FromStr, thread, time::Duration, sync::mpsc};
 use vault_gui::*;
-
-use std::sync::mpsc;
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
