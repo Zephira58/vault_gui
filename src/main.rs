@@ -94,7 +94,7 @@ impl eframe::App for MyApp {
                     //Tests if the end user has internet access.
                     let iptest = "142.250.70.142".to_owned();
                     let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
-                                        let port = 0;
+                                        let port = 80;
 
                     // Create a channel to communicate the result of the ping test
                     let tx = self.tx.clone();
