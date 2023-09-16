@@ -18,7 +18,7 @@ Vault GUI is a very small lightweight application designed to mimic a basic bank
 
 ## EasyCompile 
 Easycompile is a small script for windows, linux, and macos that'll fetch the most up to date version of the application (master branch) and compile it locally. Downloading all neccarry components to compile the application
-### 🪟Windows (Powershell) (Untested)
+### 🪟Windows (Powershell) (Tested)
 ```
 winget install Git.Git; winget install Rustlang.Rustup; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; cargo build --release; cd .\target\release; mv vault_gui.exe ..\..\; cd ..\..\; rm -r .\target\; .\vault_gui.exe
 ```
