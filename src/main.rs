@@ -108,10 +108,12 @@ impl eframe::App for MyApp {
 
                     if let Ok(result) = self.rx.try_recv() {
                         if result {
+                            self.toasts.dismiss_all_toasts();
                            cb(self.toasts.success("Network Connection Established!"));
                           println!("Network Connection Established");
                          self.network_status = NetworkStatus::Up
                       } else {
+                        self.toasts.dismiss_all_toasts();
                          cb(self.toasts.error("Network Connection Failed!!"));
                          println!("Network Connection Failed!");
                          self.network_status = NetworkStatus::Down
@@ -121,6 +123,8 @@ impl eframe::App for MyApp {
                 NetworkStatus::Down => {
                     ui.colored_label(Color32::from_rgb(150, 0, 0), "Warning: Was not able to successfully test your network connection, you may have difficulties.\n\nPlease ensure that you have a stable network connection\n");
                     let bypass = ui.button("Bypass").clicked();
+                    self.toasts.dismiss_all_toasts();
+                    cb(self.toasts.warning("Network connection could not be established!"));
                     if bypass {
                         self.network_status = NetworkStatus::Up
                     }
@@ -151,10 +155,12 @@ impl eframe::App for MyApp {
 
                         if ui.button("Connect").clicked() {
                             self.connect = true;
+                            self.toasts.dismiss_all_toasts();
                             cb(self.toasts.info("Testing connection..."));
 
                             let ip_verified = validate_ip_address(&self.ip);
                             if !ip_verified {
+                                self.toasts.dismiss_all_toasts();
                                 cb(self.toasts.error("Invalid IP Address!"));
                                 println!("Invalid IP Address!");
                                 return;
@@ -212,10 +218,12 @@ impl eframe::App for MyApp {
             if self.connect {
                 if let Ok(result) = self.rx.try_recv() {
                     if result && !self.db_ip_valid {
+                        self.toasts.dismiss_all_toasts();
                         cb(self.toasts.success("Connection Successful!"));
                         self.db_ip_valid = true;
                         println!("Connection Successful!")
                     } else if !self.db_ip_valid {
+                        self.toasts.dismiss_all_toasts();
                         cb(self.toasts.error("Connection Failed!"));
                         println!("Connection Failed!")
                     }
