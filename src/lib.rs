@@ -9,6 +9,20 @@ use std::{
     time::Duration,
 };
 
+pub fn string_to_bool (config: String) -> bool {
+    let enabled = config.trim();
+    let truth_value: bool = match enabled {
+        "true" => true,
+        "t" => true,
+        "false" => false,
+        "f" => false,
+        _ => false  // Or whatever appropriate default value or error.
+    };
+
+    return truth_value
+}
+
+
 pub async fn is_server_alive(ip: IpAddr, port: u16, timeout_secs: u64) -> bool {
     if let Ok(_) = TcpStream::connect_timeout(&(ip, port).into(), Duration::from_secs(timeout_secs))
     {
@@ -48,13 +62,13 @@ pub fn config_manager() -> HashMap<String, String> {
                 .open(dir.to_str().unwrap().to_owned() + "config.toml")
                 .expect("create failed");
 
-            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\nip = ''\nport = '3306'\nusername = ''\npassword = ''");
+            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\nenabled = 'false'\nip = ''\nport = '3306'\nusername = ''\npassword = ''");
             //pre-inputs values if none are already present
         }
         Ok(_) => {}
     }
-
     let settings = Config::builder()
+        .add_source(config::Environment::with_prefix("APP"))
         .add_source(config::File::with_name("config"))
         .build()
         .unwrap();

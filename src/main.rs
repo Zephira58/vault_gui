@@ -25,6 +25,7 @@ enum NetworkStatus {
 }
 
 struct MyApp {
+    config_enabled: bool,
     config_check: bool,
 
     toasts: Toasts,
@@ -48,6 +49,7 @@ impl Default for MyApp {
     fn default() -> Self {
         let (tx, rx) = mpsc::channel();
         Self {
+            config_enabled: false,
             config_check: false,
 
             toasts: Toasts::default().with_anchor(Anchor::BottomRight),
@@ -82,10 +84,25 @@ impl eframe::App for MyApp {
             };
 
             if !self.config_check {
-                let _config = config_manager();
+                let config = config_manager();
                 self.config_check = true;
 
-                //TODO: Add logic that'll check for if the config is empty, if it is then skip past, if not then autofill the application variables
+                match config.get("enabled") {
+                    Some(config) => {
+                        self.config_enabled = string_to_bool(config.to_string());
+                    },
+                    _ => {},
+                }
+
+                if self.config_enabled {
+                    for (key, value) in config {
+                        println!("{} {}", key , value);
+    
+                        //TODO: find a way to make this work
+                        //self.key = key;
+                        //self.value = value;
+                    }
+                }
             }
 
             match self.network_status {
