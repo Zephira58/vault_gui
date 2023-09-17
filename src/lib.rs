@@ -78,10 +78,4 @@ pub fn config_manager() -> HashMap<String, String> {
     settings
         .try_deserialize::<HashMap<String, String>>()
         .unwrap()
-
-    //Reads the hashmap with the key of "test" to get the value
-    //match hi.get("test") {
-    //    Some(hi) => println!("{}", hi),
-    //    _ => println!("error"),
-    //}
 }
