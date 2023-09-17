@@ -1,0 +1,6 @@
+#Enter your MySQL information below for caching
+Enabled: 'false'
+MySQL-ip: ''
+MySQL-port: '3306'
+Name: ''
+Password: ''

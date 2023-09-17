@@ -19,9 +19,7 @@ tokio = { version = "1.32.0", features = ["full"] } #Allows for aync/threading
 regex = "1.9.5" #Uses this to check ip validity
 
 #Used for config file
-serde = "1.0"
 serde_yaml = "0.9"
-indexmap = "2.0.0"
 
 [profile.release]
 opt-level = 3

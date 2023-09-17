@@ -2319,9 +2319,7 @@ version = "0.2.1"
 dependencies = [
  "eframe",
  "egui-notify",
- "indexmap",
  "regex",
- "serde",
  "serde_yaml",
  "tokio",
 ]

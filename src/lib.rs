@@ -1,4 +1,3 @@
-use serde;
 use serde_yaml;
 use regex::Regex;
 use std::{
@@ -53,7 +52,7 @@ pub fn config_manager() /*-> BTreeMap<&str, &str>*/ {
         .read(true)
         .open(dir.to_str().unwrap().to_owned() + "config.yaml");
 
-    match config_check  {
+    match config_check {
         Err(_) => {
             fs::create_dir_all(dir.clone()).unwrap();
             let mut config_file = fs::OpenOptions::new()
@@ -64,21 +63,21 @@ pub fn config_manager() /*-> BTreeMap<&str, &str>*/ {
                 .expect("create failed");
 
             let mut yaml_data = BTreeMap::new();
-            yaml_data.insert("01-enabled", "false");
-            yaml_data.insert("02-ip", "");
-            yaml_data.insert("03-port", "3306");
-            yaml_data.insert("04-username", "");
-            yaml_data.insert("05-password", "");
+            yaml_data.insert("Enabled", "false");
+            yaml_data.insert("MySQL-ip", "");
+            yaml_data.insert("MySQL-port", "3306");
+            yaml_data.insert("Name", "");
+            yaml_data.insert("Password", "");
             
 
             let yaml = serde_yaml::to_string(&yaml_data);
             println!("{:?}", yaml);
 
             let _ = config_file.write_all(b"#Enter your MySQL information below for caching\n");
-            let _ = config_file.write_all(yaml.as_bytes());
+            let _ = config_file.write_all(yaml.expect("Failed to write data").as_bytes());
             //pre-inputs values if none are already present
 
-            return yaml_data
+            //return yaml_data
         },
         Ok(_) => {
             fs::create_dir_all(dir.clone()).unwrap();
@@ -89,7 +88,7 @@ pub fn config_manager() /*-> BTreeMap<&str, &str>*/ {
                 .open(dir.to_str().unwrap().to_owned() + "config.yaml")
                 .expect("create failed");
 
-            let mut yaml_data = serde_yaml::from_str(&config_file);
+            //let mut yaml_data = serde_yaml::from_str(&config_file);
         }
     }
 }
