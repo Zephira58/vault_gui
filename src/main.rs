@@ -19,6 +19,7 @@ fn main() -> Result<(), eframe::Error> {
 
 enum NetworkStatus {
     Untested,
+    Testing,
     Down,
     Up,
 }
@@ -92,7 +93,7 @@ impl eframe::App for MyApp {
                     //Tests if the end user has internet access.
                     let iptest = "142.250.70.142".to_owned();
                     let ip: IpAddr = IpAddr::from_str(&iptest).unwrap();
-                                        let port = 80;
+                    let port = 80;
 
                     // Create a channel to communicate the result of the ping test
                     let tx = self.tx.clone();
@@ -103,17 +104,7 @@ impl eframe::App for MyApp {
                             .block_on(is_server_alive(ip, port as u16, 30));
                        tx.send(result).expect("Failed to send result");
                     });
-
-                    if let Ok(result) = self.rx.try_recv() {
-                        if result {
-                            self.toasts.dismiss_all_toasts();
-                           cb(self.toasts.success("Network Connection Established!"));
-                          println!("Network Connection Established");
-                         self.network_status = NetworkStatus::Up
-                      } else {
-                         self.network_status = NetworkStatus::Down
-                     }
-                }
+                    self.network_status = NetworkStatus::Testing;
                 }
                 NetworkStatus::Down => {
                     ui.colored_label(Color32::from_rgb(150, 0, 0), "Warning: Was not able to successfully test your network connection, you may have difficulties.\n\nPlease ensure that you have a stable network connection\n");
@@ -153,7 +144,6 @@ impl eframe::App for MyApp {
                         if ui.button("Connect").clicked() {
                             self.connect = true;
                             self.toasts.dismiss_all_toasts();
-                            cb(self.toasts.info("Testing connection..."));
 
                             let ip_verified = validate_ip_address(&self.ip);
                             if !ip_verified {
@@ -163,6 +153,8 @@ impl eframe::App for MyApp {
                                 return;
                             }
 
+                            cb(self.toasts.info("Testing connection..."));
+                            
                             println!("IP: {}", self.ip);
                             println!("Port: {}", self.port);
                             println!("Testing connection to server...");
@@ -177,12 +169,26 @@ impl eframe::App for MyApp {
                                 let result = tokio::runtime::Runtime::new()
                                     .unwrap()
                                     .block_on(is_server_alive(ip, port as u16, 5));
-                                tx.send(dbg!(result)).expect("Failed to send result");
+                                tx.send(result).expect("Failed to send result");
                             });
                         }
                     }
 
 
+                },
+                NetworkStatus::Testing => {
+                    ui.label("Please wait while your internet connection is being tested");
+
+                    if let Ok(result) = self.rx.try_recv() {
+                        if result {
+                            self.toasts.dismiss_all_toasts();
+                            cb(self.toasts.success("Network Connection Established!"));
+                            println!("Network Connection Established");
+                            self.network_status = NetworkStatus::Up;
+                        } else {
+                             self.network_status = NetworkStatus::Down
+                        }
+                    }
                 },
             }
 

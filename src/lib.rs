@@ -18,6 +18,11 @@ pub async fn is_server_alive(ip: IpAddr, port: u16, timeout_secs: u64) -> bool {
     }
 }
 
+pub fn increment(mut num: i32) -> i32 {
+    num = num + 1;
+    return num
+}
+
 pub fn validate_ip_address(ip_address: &str) -> bool {
     // Regular expression pattern for matching IP addresses
     let pattern =
