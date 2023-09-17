@@ -87,14 +87,14 @@ impl eframe::App for MyApp {
                 let config = config_manager();
                 self.config_check = true;
 
-                match config.get("enabled") {
+                /*match config.get("enabled") {
                     Some(config) => {
                         self.config_enabled = string_to_bool(config.to_string());
                     },
                     _ => {},
-                }
+                }*/
 
-                if self.config_enabled {
+                /*if self.config_enabled {
                     for (key, value) in config {
                         println!("{} {}", key , value);
     
@@ -102,7 +102,7 @@ impl eframe::App for MyApp {
                         //self.key = key;
                         //self.value = value;
                     }
-                }
+                }*/
             }
 
             match self.network_status {

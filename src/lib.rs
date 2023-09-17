@@ -1,7 +1,8 @@
-use config::Config;
+use serde;
+use serde_yaml;
 use regex::Regex;
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs::{self},
     io::Write,
     net::{IpAddr, TcpStream},
@@ -45,37 +46,50 @@ pub fn validate_ip_address(ip_address: &str) -> bool {
     regex.is_match(ip_address)
 }
 
-pub fn config_manager() -> HashMap<String, String> {
+pub fn config_manager() /*-> BTreeMap<&str, &str>*/ {
     let dir = Path::new("./");
 
     let config_check = fs::OpenOptions::new()
         .read(true)
-        .open(dir.to_str().unwrap().to_owned() + "config.toml");
+        .open(dir.to_str().unwrap().to_owned() + "config.yaml");
 
-    match config_check {
+    match config_check  {
         Err(_) => {
             fs::create_dir_all(dir.clone()).unwrap();
             let mut config_file = fs::OpenOptions::new()
                 .write(true)
                 .read(true)
                 .create(true)
-                .open(dir.to_str().unwrap().to_owned() + "config.toml")
+                .open(dir.to_str().unwrap().to_owned() + "config.yaml")
                 .expect("create failed");
 
-            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\nenabled = 'false'\nip = ''\nport = '3306'\nusername = ''\npassword = ''");
+            let mut yaml_data = BTreeMap::new();
+            yaml_data.insert("01-enabled", "false");
+            yaml_data.insert("02-ip", "");
+            yaml_data.insert("03-port", "3306");
+            yaml_data.insert("04-username", "");
+            yaml_data.insert("05-password", "");
+            
+
+            let yaml = serde_yaml::to_string(&yaml_data);
+            println!("{:?}", yaml);
+
+            let _ = config_file.write_all(b"#Enter your MySQL information below for caching\n");
+            let _ = config_file.write_all(yaml.as_bytes());
             //pre-inputs values if none are already present
+
+            return yaml_data
+        },
+        Ok(_) => {
+            fs::create_dir_all(dir.clone()).unwrap();
+            let mut config_file = fs::OpenOptions::new()
+                .write(false)
+                .read(true)
+                .create(false)
+                .open(dir.to_str().unwrap().to_owned() + "config.yaml")
+                .expect("create failed");
+
+            let mut yaml_data = serde_yaml::from_str(&config_file);
         }
-        Ok(_) => {}
     }
-    let settings = Config::builder()
-        .add_source(config::Environment::with_prefix("APP"))
-        .add_source(config::File::with_name("config"))
-        .build()
-        .unwrap();
-
-    //Sets the variable "hi" to a hashmaped version of the config.toml file.
-
-    settings
-        .try_deserialize::<HashMap<String, String>>()
-        .unwrap()
 }
