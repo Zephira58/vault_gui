@@ -2,7 +2,7 @@
 
 use eframe::egui::{self, Color32};
 use egui_notify::{Anchor, Toast, Toasts};
-use std::{net::IpAddr, str::FromStr, thread, time::Duration, sync::mpsc};
+use std::{net::IpAddr, str::FromStr, sync::mpsc, thread, time::Duration};
 use vault_gui::*;
 
 fn main() -> Result<(), eframe::Error> {
