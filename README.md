@@ -23,8 +23,9 @@ Easycompile is a small script for windows, linux, and macos that'll fetch the mo
 winget install Git.Git; winget install Rustlang.Rustup; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; cargo build --release; cd .\target\release; mv vault_gui.exe ..\..\; cd ..\..\; rm -r .\target\; .\vault_gui.exe
 ```
 
-### 🐧Linux (Debian+) (Untested)
+### 🐧Linux (Debian+)
 ```
+sudo su; apt install git; curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh; cd ~; git clone https://github.com/Xanthus58/vault_gui; cd vault_gui; cargo build --release; cd ./target/release; mv vault_gui.exe ../../; cd ../../; rm -r ./target/; ./vault_gui.exe
 ```
 
 ### 🍎Macos
